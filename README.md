@@ -65,3 +65,13 @@ The dashboard uses the PhonePe Pulse state transaction and category CSV files in
 ## Security
 
 Keep API keys in `backend/.env`. Do not commit `.env` files or paste API keys into source code.
+
+## Free demo hosting
+
+The frontend and API can be hosted separately. A demo setup is Vercel for the Next.js frontend and Render for the FastAPI backend.
+
+1. Deploy the Render Blueprint from `render.yaml` and set `GEMINI_API_KEY` in the Render service environment.
+2. In Vercel, import this repository and set the project root directory to `frontend`.
+3. Set the Vercel environment variable `NEXT_PUBLIC_API_URL` to the public Render API URL (for example, `https://your-api.onrender.com`), then deploy.
+
+The Render free web service sleeps after 15 minutes without traffic and may take about a minute to wake on the next request. Vercel's free Hobby plan is for personal, non-commercial projects.
