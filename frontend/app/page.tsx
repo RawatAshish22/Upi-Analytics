@@ -22,6 +22,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
   AreaChart,
   Area,
   LabelList,
@@ -101,6 +103,12 @@ function compactTransactions(value: number) {
   if (value >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
   if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
   return Math.round(value).toLocaleString("en-IN");
+}
+
+function formatCopilotChartValue(chart: CopilotChart, value: number) {
+  return chart.valueFormat === "rupees"
+    ? `₹${Math.round(value).toLocaleString("en-IN")}`
+    : compactTransactions(value);
 }
 
 function compactAmount(valueInCrore: number) {
@@ -1008,18 +1016,26 @@ export default function Home() {
                               <ResponsiveContainer width="100%" height="100%">
                                 {msg.chart.type === "pie" ? (
                                   <PieChart>
-                                    <Tooltip formatter={(value: any) => [compactTransactions(Number(value)), "Transactions"]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
-                                    <Pie data={msg.chart.data} dataKey="transactions" nameKey="year" cx="50%" cy="50%" outerRadius="76%" innerRadius="30%" paddingAngle={3} label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), String(name)]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
+                                    <Pie data={msg.chart.data} dataKey={msg.chart.valueKey ?? "transactions"} nameKey={msg.chart.labelKey ?? "year"} cx="50%" cy="50%" outerRadius="76%" innerRadius="30%" paddingAngle={3} label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`} labelLine={false}>
                                       {msg.chart.data.map((_, pointIndex) => <Cell key={pointIndex} fill={["#8B5CF6", "#22D3EE", "#34D399", "#F5C26B", "#6366F1"][pointIndex % 5]} />)}
                                     </Pie>
                                   </PieChart>
-                                ) : msg.chart.type === "line" || msg.chart.type === "area" ? (
+                                ) : msg.chart.type === "line" ? (
+                                  <LineChart data={msg.chart.data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
+                                    <CartesianGrid vertical={false} stroke={darkMode ? "#FFFFFF12" : "#64748B24"} />
+                                    <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
+                                    <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
+                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
+                                    {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "#8B5CF6" }]).map((series) => <Line key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={series.color} strokeWidth={2.5} dot={{ r: 2.5 }} activeDot={{ r: 5 }} connectNulls />)}
+                                  </LineChart>
+                                ) : msg.chart.type === "area" ? (
                                   <AreaChart data={msg.chart.data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
                                     <CartesianGrid vertical={false} stroke={darkMode ? "#FFFFFF12" : "#64748B24"} />
-                                    <XAxis dataKey="year" tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
-                                    <YAxis width={52} tickLine={false} axisLine={false} tickFormatter={(value: number) => compactTransactions(value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
-                                    <Tooltip formatter={(value: any) => [compactTransactions(Number(value)), "Transactions"]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
-                                    <Area type="monotone" dataKey="transactions" stroke="#8B5CF6" strokeWidth={3} fill={msg.chart.type === "area" ? "#8B5CF6" : "none"} fillOpacity={msg.chart.type === "area" ? 0.2 : 0} />
+                                    <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
+                                    <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
+                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
+                                    {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "#8B5CF6" }]).map((series) => <Area key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={series.color} strokeWidth={2.5} fill={series.color} fillOpacity={0.15} connectNulls />)}
                                   </AreaChart>
                                 ) : (
                                 <BarChart data={msg.chart.data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
@@ -1030,16 +1046,14 @@ export default function Home() {
                                     </linearGradient>
                                   </defs>
                                   <CartesianGrid vertical={false} stroke={darkMode ? "#FFFFFF12" : "#64748B24"} />
-                                  <XAxis dataKey="year" tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
-                                  <YAxis width={52} tickLine={false} axisLine={false} tickFormatter={(value: number) => compactTransactions(value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
+                                  <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
+                                  <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
                                   <Tooltip
-                                    formatter={(value: any) => [compactTransactions(Number(value)), "Transactions"]}
+                                    formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]}
                                     labelFormatter={(label: any) => String(label)}
                                     contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }}
                                   />
-                                  <Bar dataKey="transactions" fill={`url(#copilot-bar-${index})`} radius={[6, 6, 0, 0]} maxBarSize={54}>
-                                    <LabelList dataKey="transactions" position="top" formatter={(value: any) => compactTransactions(Number(value))} fill={darkMode ? "#D8DDF0" : "#475569"} fontSize={10} />
-                                  </Bar>
+                                  {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: `url(#copilot-bar-${index})` }]).map((series) => <Bar key={series.key} dataKey={series.key} name={series.label} fill={series.color} radius={[6, 6, 0, 0]} maxBarSize={54}>{msg.chart?.series?.length === 1 && <LabelList dataKey={series.key} position="top" formatter={(value: any) => formatCopilotChartValue(msg.chart!, Number(value))} fill={darkMode ? "#D8DDF0" : "#475569"} fontSize={10} />}</Bar>)}
                                 </BarChart>
                                 )}
                               </ResponsiveContainer>

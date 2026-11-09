@@ -141,7 +141,12 @@ export async function getInsights(year?: number, states?: string[]) {
 export type CopilotChart = {
   type: "bar" | "pie" | "line" | "area";
   title: string;
-  data: { year: number; transactions: number }[];
+  data: Record<string, string | number>[];
+  valueKey?: string;
+  labelKey?: string;
+  valueFormat?: "transactions" | "rupees";
+  valueLabel?: string;
+  series?: { key: string; label: string; color: string }[];
   note?: string | null;
 };
 

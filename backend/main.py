@@ -524,64 +524,110 @@ async def chat(request: dict):
     ))
     requested_chart_type = "pie" if re.search(r"\b(?:pie|donut)\s*chart\b", question, re.IGNORECASE) else "line" if re.search(r"\bline\s*chart\b", question, re.IGNORECASE) else "area" if re.search(r"\barea\s*chart\b", question, re.IGNORECASE) else "bar"
     year_axis_requested = bool(re.search(r"\b(?:x\s*axis|x-axis|horizontal\s+axis|year|yearly|annually|by\s+year|year\s+by\s+year|each\s+year|per\s+year)\b", question, re.IGNORECASE))
-    requested_state = next(
-        (name for name in sorted(state_df["state"].dropna().unique(), key=len, reverse=True)
-         if re.search(rf"\b{re.escape(name)}\b", question, re.IGNORECASE)),
-        None,
-    )
-    if requested_state is None and state_list is not None and len(state_list) == 1:
-        requested_state = state_list[0]
+    available_state_names = sorted(state_df["state"].dropna().unique(), key=len, reverse=True)
+    requested_states = [
+        name for name in available_state_names
+        if re.search(rf"\b{re.escape(name)}\b", question, re.IGNORECASE)
+    ]
+    if not requested_states and state_list is not None:
+        requested_states = list(state_list)
 
-    chart_all_years = year_range or all_years_requested or year_axis_requested or (explicit_year is None and selected_year is None)
-    if chart_requested and requested_state:
-        chart_state_data = state_df[state_df["state"].str.casefold() == requested_state.casefold()].copy()
+    average_value_requested = bool(re.search(
+        r"\b(?:average|avg|mean)\b.*\b(?:value|amount|ticket|transaction)\b|"
+        r"\b(?:value|amount|ticket)\b.*\b(?:average|avg|mean|per\s+transaction)\b",
+        question,
+        re.IGNORECASE,
+    ))
+    amount_requested = not average_value_requested and bool(re.search(
+        r"\b(?:transaction\s+value|total\s+amount|payment\s+value|amount)\b",
+        question,
+        re.IGNORECASE,
+    ))
+    metric_key = "average_value" if average_value_requested else "amount" if amount_requested else "transactions"
+    metric_label = "Average transaction value" if average_value_requested else "Transaction value" if amount_requested else "Transactions"
+    chart_palette = ["#8B5CF6", "#22D3EE", "#34D399", "#F5C26B", "#EC4899", "#6366F1", "#F97316", "#14B8A6"]
+
+    if chart_requested and requested_states:
+        chart_state_data = state_df[state_df["state"].isin(requested_states)].copy()
         if year_range:
             chart_state_data = chart_state_data[chart_state_data["year"].between(range_start, range_end)]
-        elif explicit_year and not chart_all_years:
+        elif all_years_requested:
+            pass
+        elif explicit_year:
             chart_state_data = chart_state_data[chart_state_data["year"] == int(explicit_year.group())]
-        elif explicit_year and not chart_all_years:
-            chart_state_data = chart_state_data[chart_state_data["year"] == int(explicit_year.group())]
-        elif not chart_all_years and selected_year is not None:
+        elif selected_year is not None and not year_axis_requested:
             chart_state_data = chart_state_data[chart_state_data["year"] == int(selected_year)]
-        chart_rows = (
-            chart_state_data
-            .groupby("year", as_index=False)["transactions"]
-            .sum()
-            .sort_values("year")
+
+        chart_totals = chart_state_data.groupby(["year", "state"], as_index=False).agg(
+            transactions=("transactions", "sum"), amount=("amount", "sum")
         )
-        if not chart_rows.empty:
-            available_in_range = set(chart_rows["year"].dropna().astype(int))
-            missing_years = [year_value for year_value in range(range_start, range_end + 1) if year_value not in available_in_range] if year_range else []
-            chart_start = range_start if year_range else int(chart_rows["year"].min())
-            chart_end = range_end if year_range else int(chart_rows["year"].max())
-            answer = f"Here are {requested_state}'s transaction totals by year for {chart_start}–{chart_end}, based on the available data."
+        if average_value_requested:
+            chart_totals["average_value"] = chart_totals["amount"] / chart_totals["transactions"].replace(0, pd.NA)
+        chart_totals = chart_totals.dropna(subset=[metric_key]).sort_values(["year", "state"])
+
+        if not chart_totals.empty:
             notes = []
+            available_in_range = set(chart_totals["year"].dropna().astype(int))
+            missing_years = [year_value for year_value in range(range_start, range_end + 1) if year_value not in available_in_range] if year_range else []
             if missing_years:
                 notes.append(f"No records were found for {', '.join(map(str, missing_years))}; those years are omitted.")
-            quarters_by_year = (
-                chart_state_data
-                .groupby("year")["quarter"]
-                .apply(lambda quarters: sorted(set(quarters.dropna().astype(str))))
+
+            quarters_by_year = chart_state_data.groupby("year")["quarter"].apply(
+                lambda quarters: sorted(set(quarters.dropna().astype(str)))
             )
             partial_years = [
                 f"{int(year_value)} includes {', '.join(quarters_by_year.loc[year_value])} only"
-                for year_value in chart_rows["year"]
+                for year_value in chart_totals["year"].unique()
                 if year_value in quarters_by_year.index and len(quarters_by_year.loc[year_value]) < 4
             ]
             if partial_years:
                 notes.append("Partial-year totals: " + "; ".join(partial_years) + ".")
-            return {
-                "answer": answer,
-                "chart": {
-                    "type": requested_chart_type,
-                    "title": f"{requested_state} transactions by year",
-                    "data": [
-                        {"year": int(row.year), "transactions": int(row.transactions)}
-                        for row in chart_rows.itertuples(index=False)
-                    ],
-                    "note": " ".join(notes) or None,
-                },
+
+            pie_chart = requested_chart_type == "pie"
+            if pie_chart and len(requested_states) > 1:
+                pie_data = chart_state_data.groupby("state", as_index=False).agg(
+                    transactions=("transactions", "sum"), amount=("amount", "sum")
+                )
+                if average_value_requested:
+                    pie_data["average_value"] = pie_data["amount"] / pie_data["transactions"].replace(0, pd.NA)
+                pie_data = pie_data.dropna(subset=[metric_key])
+                chart_data = [{"label": row.state, "value": float(getattr(row, metric_key))} for row in pie_data.itertuples(index=False)]
+                chart_title = f"{metric_label} by state ({year_scope})"
+            elif pie_chart:
+                pie_data = chart_totals.groupby("year", as_index=False)[metric_key].sum().sort_values("year")
+                chart_data = [{"label": str(int(row.year)), "value": float(getattr(row, metric_key))} for row in pie_data.itertuples(index=False)]
+                chart_title = f"{metric_label} by year for {requested_states[0]}"
+            else:
+                chart_data = []
+                chart_series = []
+                for index, state_name in enumerate(requested_states):
+                    chart_series.append({"key": state_name, "label": state_name, "color": chart_palette[index % len(chart_palette)]})
+                for year_value, year_rows in chart_totals.groupby("year", sort=True):
+                    point = {"year": int(year_value)}
+                    for row in year_rows.itertuples(index=False):
+                        point[row.state] = float(getattr(row, metric_key))
+                    chart_data.append(point)
+                chart_title = f"{metric_label} by year: {', '.join(requested_states)}"
+
+            if len(requested_states) == 1:
+                subject = requested_states[0]
+            else:
+                subject = ", ".join(requested_states)
+            scope_text = f"{range_start}–{range_end}" if year_range else year_scope
+            answer = f"{metric_label} chart for {subject}, {scope_text}."
+            value_format = "rupees" if metric_key in {"amount", "average_value"} else "transactions"
+            chart = {
+                "type": requested_chart_type,
+                "title": chart_title,
+                "data": chart_data,
+                "valueKey": "value" if pie_chart or len(requested_states) == 1 else None,
+                "labelKey": "label" if pie_chart else "year",
+                "valueFormat": value_format,
+                "valueLabel": "Average transaction value" if average_value_requested else "Transaction value" if amount_requested else "Transactions",
+                "series": [] if pie_chart else chart_series,
+                "note": " ".join(notes) or None,
             }
+            return {"answer": answer, "chart": chart}
 
     if filtered_state.empty:
         dataset_context = "No data available for the selected filters."
