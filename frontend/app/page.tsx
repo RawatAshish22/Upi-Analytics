@@ -32,15 +32,11 @@ import {
   Cell,
 } from "recharts";
 import {
-  Activity,
   Bot,
   ChevronDown,
-  Coins,
-  MapPin,
   Moon,
   Search,
   Send,
-  Sparkles,
   Sun,
   Trash2,
   X,
@@ -52,9 +48,7 @@ type ChatMessage = { role: "user" | "assistant"; content: string; chart?: Copilo
 
 function Skeleton({ className = "" }: { className?: string }) {
   return (
-    <div
-      className={`animate-pulse rounded-lg border border-[#6366F1]/10 bg-[#E8ECF5]/60 dark:border-white/[0.04] dark:bg-white/[0.06] ${className}`}
-    ></div>
+    <div className={`rounded-lg border border-[var(--hairline)] bg-[var(--surface-raised)] ${className}`} />
   );
 }
 
@@ -76,26 +70,6 @@ function AnimatedValue({ value, format }: { value: number; format: (n: number) =
   }, [value]);
 
   return <>{format(displayValue)}</>;
-}
-
-function Sparkline({ values, positive }: { values: number[]; positive: boolean }) {
-  if (values.length < 3) return null;
-  const width = 88;
-  const height = 32;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const spread = max - min || 1;
-  const points = values.map((value, index) => {
-    const x = (index / (values.length - 1)) * width;
-    const y = height - 3 - ((value - min) / spread) * (height - 6);
-    return `${x},${y}`;
-  });
-  const color = positive ? "#34D399" : "#FB7185";
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-8 w-[5.5rem] overflow-visible" aria-hidden="true">
-      <polyline points={points.join(" ")} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 function compactTransactions(value: number) {
@@ -229,7 +203,7 @@ function FormattedAnswer({ text }: { text: string }) {
       blocks.push(
         <div key={`table-${blockId++}`} className="thin-scrollbar overflow-x-auto rounded-xl border border-white/[0.08]">
           <table className="min-w-full border-collapse text-left text-xs">
-            <thead className="bg-white/[0.05] text-[#A5B4FC]"><tr>{headers.map((cell, cellIndex) => <th key={cellIndex} className={`px-3 py-2 font-semibold ${numericColumns[cellIndex] ? "text-right" : "text-left"}`}>{formatInline(cell)}</th>)}</tr></thead>
+            <thead className="bg-white/[0.05] text-[var(--accent)]"><tr>{headers.map((cell, cellIndex) => <th key={cellIndex} className={`px-3 py-2 font-semibold ${numericColumns[cellIndex] ? "text-right" : "text-left"}`}>{formatInline(cell)}</th>)}</tr></thead>
             <tbody>{rows.map((cellsInRow, rowIndex) => <tr key={rowIndex} className="border-t border-white/[0.06] text-[#C7CDE0]">{cellsInRow.map((cell, cellIndex) => <td key={cellIndex} className={`px-3 py-2 tabular-nums ${numericColumns[cellIndex] ? "text-right" : "text-left"}`}>{formatInline(displayCell(cell))}</td>)}</tr>)}</tbody>
           </table>
         </div>
@@ -315,11 +289,11 @@ function IndiaActivityMap({ data, darkMode }: { data: any[]; darkMode: boolean }
   const transactionByState = new Map(data.map((item) => [normalizeStateName(item.state), item.transactions]));
   const max = Math.max(...data.map((item) => item.transactions), 1);
   const stops = darkMode
-    ? ["#29345F", "#343C7B", "#4546A8", "#6366F1", "#22D3EE"]
-    : ["#C4B5FD", "#A5B4FC", "#818CF8", "#6366F1", "#0891B2"];
+    ? ["#17345d", "#1e4778", "#2c6399", "#3e82bd", "#66b6d4"]
+    : ["#dceaff", "#bdd6fa", "#91b8ee", "#5e91dc", "#1d4ed8"];
   const stateFill = (name: string) => {
     const transactions = transactionByState.get(normalizeStateName(name));
-    if (transactions === undefined) return darkMode ? "#12182F" : "#E8ECF5";
+    if (transactions === undefined) return darkMode ? "#111b2e" : "#e8eff8";
     const ratio = transactions / max;
     const index = Math.min(stops.length - 1, Math.floor(ratio * (stops.length - 1)));
     return stops[index];
@@ -379,7 +353,7 @@ function IndiaActivityMap({ data, darkMode }: { data: any[]; darkMode: boolean }
   );
 }
 
-const COLORS = ["#6366F1", "#E879F9", "#22D3EE", "#34D399", "#F5C26B", "#A78BFA", "#38BDF8"];
+const COLORS = Array.from({ length: 7 }, (_, index) => `var(--series-${index + 1})`);
 const REGIONS: Record<string, string[]> = {
   North: ["Chandigarh", "Delhi", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", "Ladakh", "Punjab", "Rajasthan", "Uttar Pradesh", "Uttarakhand"],
   South: ["Andhra Pradesh", "Karnataka", "Kerala", "Puducherry", "Tamil Nadu", "Telangana", "Lakshadweep"],
@@ -629,29 +603,30 @@ export default function Home() {
     : null;
 
   return (
-    <div className="dashboard-shell transition-colors duration-300">
+    <div className="dashboard-shell">
       {/* Header */}
-      <header className="border-b border-white/[0.06] bg-[#080D20] text-[#E6EAF5] shadow-xl shadow-black/10">
-        <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 sm:py-7">
-          <div className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <header className="border-b">
+        <div className="mx-auto max-w-[1440px] px-4 py-4 sm:px-6 sm:py-5">
+          <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] text-xl font-bold text-white shadow-lg shadow-indigo-950/50">₹</div>
+              <div className="brand-mark flex h-10 w-10 items-center justify-center rounded-lg text-lg font-medium text-white">₹</div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  UPI Payments <span className="bg-gradient-to-r from-[#A5B4FC] to-[#C4B5FD] bg-clip-text text-transparent">Analytics</span>
+                <h1 className="text-2xl font-medium sm:text-[28px]">
+                  UPI Payments Analytics
                 </h1>
-                <p className="mt-1 text-xs tracking-wide text-[#8B94B3] sm:text-sm">
-                  PhonePe Pulse <span className="mx-1 text-[#6366F1]">·</span> India transaction intelligence
+                <p className="mt-1 text-sm text-[#8B94B3]">
+                  PhonePe Pulse <span className="mx-1">·</span> India transaction intelligence
                 </p>
               </div>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="year-switcher thin-scrollbar flex max-w-full items-center gap-2 overflow-x-auto rounded-xl border border-white/[0.08] bg-white/[0.035] p-1">
+              <div className="year-switcher thin-scrollbar flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border p-1">
                 <button
                   type="button"
                   onClick={() => setSelectedYear(undefined)}
-                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition-colors duration-200 ${selectedYear === undefined ? "bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white shadow-md shadow-indigo-950/40" : "text-[#8B94B3] hover:bg-white/[0.06] hover:text-[#E6EAF5]"}`}
+                  aria-pressed={selectedYear === undefined}
+                  className={`year-option shrink-0 rounded-md px-3 py-2 text-xs transition-colors ${selectedYear === undefined ? "active-year" : ""}`}
                 >
                   All
                 </button>
@@ -660,7 +635,8 @@ export default function Home() {
                     key={year}
                     type="button"
                     onClick={() => setSelectedYear(year)}
-                    className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold tabular-nums transition-colors duration-200 ${selectedYear === year ? "bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white shadow-md shadow-indigo-950/40" : "text-[#8B94B3] hover:bg-white/[0.06] hover:text-[#E6EAF5]"}`}
+                    aria-pressed={selectedYear === year}
+                    className={`year-option shrink-0 rounded-md px-3 py-2 text-xs tabular-nums transition-colors ${selectedYear === year ? "active-year" : ""}`}
                   >
                     {year}
                   </button>
@@ -668,7 +644,7 @@ export default function Home() {
               </div>
               <button
                 onClick={toggleDarkMode}
-                className="theme-toggle inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] px-3 py-2 text-xs font-medium text-[#C7CDE0] transition hover:bg-white/[0.08]"
+                className="theme-toggle inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors"
                 title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
                 aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
               >
@@ -679,70 +655,61 @@ export default function Home() {
           </div>
 
           {/* State Filter */}
-          <div className="state-filter-panel relative rounded-2xl border border-white/[0.08] bg-white/[0.035] p-3 sm:p-4">
+          <div className="state-filter-panel relative rounded-xl border p-3 sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8B94B3]">Filter states</span>
-                {selectedStates.length === allStates.length ? <span className="rounded-full border border-[#6366F1]/30 bg-[#6366F1]/10 px-2.5 py-1 text-[11px] font-medium text-[#B7B9F8]">28 states · 8 UTs</span> : selectedStates.slice(0, 8).map((state) => (
-                  <button key={state} onClick={() => toggleState(state)} className="selected-state-pill rounded-full border border-[#6366F1]/40 bg-[#6366F1]/20 px-2.5 py-1 text-[11px] font-medium text-[#D9D7FF] transition hover:bg-[#6366F1]/30">
-                    {state} <span className="ml-1 text-[#A5B4FC]">×</span>
+                <span className="text-sm font-medium text-[#8B94B3]">Filter regions</span>
+                {selectedStates.length === allStates.length ? <span className="region-summary rounded-md border px-2.5 py-1 text-xs">28 states · 8 UTs</span> : selectedStates.slice(0, 8).map((state) => (
+                  <button key={state} onClick={() => toggleState(state)} className="selected-state-pill rounded-md border px-2.5 py-1 text-xs transition-colors">
+                    {state} <span className="chip-remove ml-1">×</span>
                   </button>
                 ))}
                 {selectedStates.length < allStates.length && selectedStates.length > 8 && <span className="text-xs text-[#8B94B3]">+{selectedStates.length - 8} more</span>}
                 {selectedStates.length === 0 && <span className="text-xs text-[#8B94B3]">No states selected</span>}
               </div>
-              <button type="button" onClick={() => setShowStatePicker(!showStatePicker)} aria-expanded={showStatePicker} className="filter-control inline-flex shrink-0 items-center justify-between gap-2 rounded-xl border border-white/[0.1] bg-[#0A0F24]/70 px-3 py-2 text-xs font-medium text-[#E6EAF5] transition hover:border-[#6366F1]/50 sm:min-w-44">
+              <button type="button" onClick={() => setShowStatePicker(!showStatePicker)} aria-expanded={showStatePicker} className="filter-control inline-flex shrink-0 items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors sm:min-w-44">
                 {selectedStates.length === allStates.length ? "All 36 regions" : `${selectedStates.length} selected`}
                 <ChevronDown size={14} className={`transition-transform ${showStatePicker ? "rotate-180" : ""}`} />
               </button>
             </div>
             {showStatePicker && (
-              <div className="state-picker-menu absolute left-0 right-0 top-[calc(100%+8px)] z-30 rounded-2xl border border-white/10 bg-[#0D132B]/95 p-4 shadow-[0_24px_64px_rgba(0,0,0,.58)] backdrop-blur-2xl">
+              <div className="state-picker-menu absolute left-0 right-0 top-[calc(100%+8px)] z-30 rounded-xl border p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div className="relative flex-1">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B94B3]" />
-                    <input value={stateSearch} onChange={(event) => setStateSearch(event.target.value)} placeholder="Search states and UTs" className="w-full rounded-lg border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-xs text-[#E6EAF5] outline-none placeholder:text-[#737C9D] focus:border-[#6366F1]" />
+                    <input value={stateSearch} onChange={(event) => setStateSearch(event.target.value)} placeholder="Search regions" className="w-full rounded-lg border py-2 pl-9 pr-3 text-sm outline-none placeholder:text-[#737C9D]" />
                   </div>
                   <button onClick={() => setShowStatePicker(false)} aria-label="Close state filter" className="rounded-lg p-2 text-[#8B94B3] hover:bg-white/5"><X size={15} /></button>
                 </div>
                 <div className="mb-3 flex flex-wrap gap-1.5">
-                  {Object.keys(REGIONS).map((region) => <button key={region} onClick={() => setRegion(region)} className="rounded-full border border-[#6366F1]/25 px-2.5 py-1 text-[10px] font-medium text-[#B7B9F8] transition hover:bg-[#6366F1]/15">{region}</button>)}
-                  <button onClick={() => setSelectedStates(allStates)} className="ml-auto rounded-full px-2.5 py-1 text-[10px] font-medium text-[#34D399] hover:bg-emerald-400/10">Select all</button>
-                  <button onClick={() => setSelectedStates([])} className="rounded-full px-2.5 py-1 text-[10px] font-medium text-[#8B94B3] hover:bg-white/5">Clear</button>
+                  {Object.keys(REGIONS).map((region) => <button key={region} onClick={() => setRegion(region)} className="rounded-md border px-2.5 py-1 text-xs text-[#8B94B3] transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.05]">{region}</button>)}
+                  <button onClick={() => setSelectedStates(allStates)} className="ml-auto rounded-md px-2.5 py-1 text-xs text-[#8B94B3] hover:bg-black/[0.04] dark:hover:bg-white/[0.05]">Select all</button>
+                  <button onClick={() => setSelectedStates([])} className="rounded-md px-2.5 py-1 text-xs text-[#8B94B3] hover:bg-black/[0.04] dark:hover:bg-white/[0.05]">Clear</button>
                 </div>
                 <div className="thin-scrollbar grid max-h-52 grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4">
-                  {visibleStates.map((state) => <button key={state} aria-pressed={selectedStates.includes(state)} onClick={() => toggleState(state)} className={`flex items-center rounded-lg px-2.5 py-2 text-left text-xs transition ${selectedStates.includes(state) ? "bg-[#6366F1]/20 text-[#D9D7FF]" : "text-[#737C9D] opacity-70 hover:bg-white/[0.05] hover:text-[#E6EAF5]"}`}><span className={`mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${selectedStates.includes(state) ? "border-[#8B5CF6] bg-[#8B5CF6] text-white" : "border-[#737C9D]"}`}>{selectedStates.includes(state) ? "✓" : ""}</span>{state}</button>)}
+                  {visibleStates.map((state) => <button key={state} aria-pressed={selectedStates.includes(state)} onClick={() => toggleState(state)} className="region-option flex items-center rounded-md border border-transparent px-2.5 py-2 text-left text-sm transition-colors"><span className="region-check mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[11px]">{selectedStates.includes(state) ? "✓" : ""}</span>{state}</button>)}
                 </div>
               </div>
             )}
           </div>
         </div>
-        <div aria-hidden="true" className="tricolor-accent h-[2px]" />
       </header>
 
       <main className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:space-y-8 sm:px-6 sm:py-9">
         {/* KPI cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {[
-            { label: "Total transactions", value: kpis.total_transactions, full: kpis.total_transactions.toLocaleString("en-IN"), icon: <Activity size={17} />, color: "#A5B4FC", series: transactionsDelta, change: selectedYear ? getQuarterChange(transactionsDelta) : null, note: selectedYear ? "Quarter comparison unavailable" : annualYoY === null ? "All-time total" : `YoY ${annualYoY >= 0 ? "+" : ""}${annualYoY.toFixed(1)}% · ${latestFullYear} vs ${priorFullYear}`, format: compactTransactions },
-            { label: "Transaction value", value: kpis.total_amount_crore, full: `₹${kpis.total_amount_crore.toLocaleString("en-IN")} crore`, icon: <Coins size={17} />, color: "#34D399", series: amountDelta, change: selectedYear ? getQuarterChange(amountDelta) : null, note: selectedYear ? `${selectedYear} total transaction value` : "All-years transaction value", format: compactAmount },
-            { label: "Regions covered", value: kpis.regions_covered, full: `${kpis.states_covered} states + ${kpis.regions_covered - kpis.states_covered} union territories`, icon: <MapPin size={17} />, color: "#F5C26B", series: [], change: null, note: `${kpis.states_covered} states + ${kpis.regions_covered - kpis.states_covered} UTs`, format: (value: number) => Math.round(value).toString() },
+            { label: "Total transactions", value: kpis.total_transactions, full: kpis.total_transactions.toLocaleString("en-IN"), change: selectedYear ? getQuarterChange(transactionsDelta) : null, note: selectedYear ? "Quarter comparison unavailable" : annualYoY === null ? "All-time total" : `YoY ${annualYoY >= 0 ? "+" : ""}${annualYoY.toFixed(1)}% · ${latestFullYear} vs ${priorFullYear}`, format: compactTransactions },
+            { label: "Transaction value", value: kpis.total_amount_crore, full: `₹${kpis.total_amount_crore.toLocaleString("en-IN")} crore`, change: selectedYear ? getQuarterChange(amountDelta) : null, note: selectedYear ? `${selectedYear} total transaction value` : "All-years transaction value", format: compactAmount },
+            { label: "Regions covered", value: kpis.regions_covered, full: `${kpis.states_covered} states + ${kpis.regions_covered - kpis.states_covered} union territories`, change: null, note: `${kpis.states_covered} states + ${kpis.regions_covered - kpis.states_covered} UTs`, format: (value: number) => Math.round(value).toString() },
           ].map((item) => (
-            <div key={item.label} title={item.full} className="glass-card kpi-card p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="mb-3 flex items-center gap-2.5">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ color: item.color, backgroundColor: `${item.color}18` }}>{item.icon}</span>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8B94B3]">{item.label}</p>
-                  </div>
-                  {loading ? <Skeleton className="mt-3 h-10 w-36" /> : (
-                    <p className="tabular-nums text-3xl font-bold tracking-tight text-[#E6EAF5] sm:text-4xl"><AnimatedValue value={item.value} format={item.format} /></p>
-                  )}
-                  <div className={`mt-3 inline-flex min-h-6 items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium ${!darkMode && item.change === null ? "light-kpi-note" : ""}`} style={{ color: item.change === null ? (darkMode ? "#A6AEC7" : undefined) : item.change >= 0 ? "#34D399" : "#FB7185", backgroundColor: item.change === null ? "rgba(139,148,179,.08)" : item.change >= 0 ? "rgba(52,211,153,.1)" : "rgba(251,113,133,.1)" }}>
-                    {item.change === null ? <><span>{item.note}</span></> : <><span>{item.change >= 0 ? "▲" : "▼"} {Math.abs(item.change).toFixed(1)}%</span><span className="text-[#8B94B3]">{quarterComparison}</span></>}
-                  </div>
-                </div>
-                <div className="mt-auto self-end"><Sparkline values={item.series} positive={item.change === null || item.change >= 0} /></div>
+            <div key={item.label} title={item.full} className="glass-card kpi-card min-h-36 p-5 sm:p-6">
+              <p className="text-sm text-[#8B94B3]">{item.label}</p>
+              {loading ? <Skeleton className="mt-4 h-9 w-36" /> : (
+                <p className="mt-3 tabular-nums text-3xl font-medium text-[#E6EAF5] sm:text-[34px]"><AnimatedValue value={item.value} format={item.format} /></p>
+              )}
+              <div className="mt-3 text-xs" style={{ color: item.change === null ? undefined : item.change >= 0 ? "var(--positive)" : "var(--negative)" }}>
+                {item.change === null ? item.note : `${item.change >= 0 ? "▲" : "▼"} ${Math.abs(item.change).toFixed(1)}% · ${quarterComparison}`}
               </div>
             </div>
           ))}
@@ -751,27 +718,26 @@ export default function Home() {
         {/* Insight cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
-            { label: "Top state", value: topStateName, detail: loading ? "" : `${topStateValue} transactions`, accent: "#F5C26B" },
-            { label: "Dominant category", value: dominantCategory, detail: "Highest transaction share", accent: "#A78BFA" },
-            { label: "Average ticket size", value: averageTicket ? `₹${averageTicket.toLocaleString("en-IN")}` : "—", detail: selectedYear ? "Selected year average" : findings?.latest_ticket ? `${findings.ticket_year}: ₹${Number(findings.latest_ticket).toLocaleString("en-IN")}` : "Transaction value ÷ transaction count", accent: "#34D399" },
+            { label: "Top state", value: topStateName, detail: loading ? "" : `${topStateValue} transactions` },
+            { label: "Dominant category", value: dominantCategory, detail: "Highest transaction share" },
+            { label: "Average ticket size", value: averageTicket ? `₹${averageTicket.toLocaleString("en-IN")}` : "—", detail: selectedYear ? "Selected year average" : findings?.latest_ticket ? `${findings.ticket_year}: ₹${Number(findings.latest_ticket).toLocaleString("en-IN")}` : "Transaction value ÷ transaction count" },
           ].map((insight) => (
-            <div key={insight.label} className="glass-card relative overflow-hidden p-5 pl-6">
-              <span className="absolute bottom-4 left-0 top-4 w-1 rounded-r-full" style={{ backgroundColor: insight.accent }} />
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8B94B3]">{insight.label}</p>
-              <p className="mt-2 text-xl font-semibold text-[#E6EAF5]">{loading ? <span className="text-[#8B94B3]">Loading…</span> : insight.value}</p>
-              <p className="mt-1 text-xs text-[#8B94B3]">{insight.detail}</p>
+            <div key={insight.label} className="glass-card p-5 sm:p-6">
+              <p className="text-sm text-[#8B94B3]">{insight.label}</p>
+              <p className="mt-3 text-xl font-medium text-[#E6EAF5]">{loading ? <span className="text-[#8B94B3]">Loading…</span> : insight.value}</p>
+              <p className="mt-1 text-sm text-[#8B94B3]">{insight.detail}</p>
             </div>
           ))}
         </div>
 
         <section className="glass-card p-4 sm:p-5" aria-label="Key data findings">
-          <div className="mb-3 flex items-center gap-2"><Sparkles size={15} className="text-[#8B5CF6]" /><h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8B94B3]">Data findings · {selectedYear ?? "All years"}</h2></div>
+          <div className="mb-3"><h2 className="text-sm font-medium text-[#8B94B3]">Data findings · {selectedYear ?? "All years"}</h2></div>
           <div key={`${selectedYear ?? "all"}-${selectedStates.length}`} className="finding-cards grid gap-3 sm:grid-cols-3">
             {(findings?.findings ?? []).map((finding: any) => {
               const [before, after] = finding.text.split(finding.highlight);
-              return <article key={finding.label} className="min-h-[78px] rounded-xl bg-white/[0.035] p-3">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8B94B3]">{finding.label}</p>
-                <p className="line-clamp-2 text-sm leading-5 text-[#C7CDE0]">{before}<strong className="font-semibold text-[#E6EAF5]">{finding.highlight}</strong>{after}</p>
+              return <article key={finding.label} className="min-h-[76px] rounded-lg bg-black/[0.025] p-4 dark:bg-white/[0.025]">
+                <p className="mb-2 text-xs font-medium text-[#8B94B3]">{finding.label}</p>
+                <p className="line-clamp-2 text-sm leading-5 text-[#C7CDE0]">{before}<strong className="font-medium text-[#E6EAF5]">{finding.highlight}</strong>{after}</p>
               </article>;
             })}
           </div>
@@ -782,23 +748,20 @@ export default function Home() {
           <section className="glass-card flex flex-col p-4 sm:p-6">
             <div className="mb-4 flex items-end justify-between gap-3 sm:mb-6">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8B94B3]">State performance</p>
-                <h2 className="mt-1 text-lg font-semibold text-[#E6EAF5]">Top 10 by transaction volume</h2>
+                <p className="text-sm text-[#8B94B3]">State performance</p>
+                <h2 className="mt-1 text-lg font-medium text-[#E6EAF5]">Top 10 by transaction volume</h2>
               </div>
-              <span className="rounded-full border border-white/[0.08] px-2.5 py-1 text-[10px] text-[#8B94B3]">{selectedYear ?? "All years"} · transactions</span>
+              <span className="text-xs text-[#8B94B3]">{selectedYear ?? "All years"} · transactions</span>
             </div>
             <div className="min-h-[22rem] flex-1 sm:min-h-[25rem]">
               {loading ? <Skeleton className="h-full w-full" /> : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={topStates.slice(0, 10)} layout="vertical" margin={{ top: 4, right: 34, bottom: 2, left: 4 }} barCategoryGap={8}>
-                    <defs>
-                      <linearGradient id="bar-indigo-cyan" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#6366F1" /><stop offset="100%" stopColor="#22D3EE" /></linearGradient>
-                    </defs>
-                    <CartesianGrid stroke="rgba(139,148,179,.10)" horizontal={false} />
-                    <XAxis type="number" tickFormatter={(value) => `${(value / 1e9).toFixed(0)}B`} tick={{ fill: "#8B94B3", fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="state" type="category" width={115} axisLine={false} tickLine={false} tick={({ x, y, payload, index }: any) => <g transform={`translate(${x},${y})`}><text x={-5} y={0} dy={4} textAnchor="end" fill={index === 0 ? (darkMode ? "#F5C26B" : "#B45309") : (darkMode ? "#8B94B3" : "#475569")} fontSize={12} fontWeight={index === 0 ? 700 : 500}>{`${index + 1}. ${payload.value}`}</text></g>} />
+                    <CartesianGrid stroke="var(--hairline)" horizontal={false} />
+                    <XAxis type="number" tickFormatter={(value) => `${(value / 1e9).toFixed(0)}B`} tick={{ fill: "var(--muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="state" type="category" width={115} axisLine={false} tickLine={false} tick={({ x, y, payload, index }: any) => <g transform={`translate(${x},${y})`}><text x={-5} y={0} dy={4} textAnchor="end" fill={index === 0 ? "var(--rank-accent)" : "var(--secondary)"} fontSize={12} fontWeight={index === 0 ? 600 : 400}>{`${index + 1}. ${payload.value}`}</text></g>} />
                     <Tooltip
-                      cursor={{ fill: "rgba(139,148,179,.06)" }}
+                      cursor={{ fill: "var(--surface-raised)" }}
                       content={({ active, payload, label }: any) => active && payload?.length ? (
                         <div className="state-map-tooltip">
                           <div className="state-map-tooltip-content">
@@ -809,8 +772,8 @@ export default function Home() {
                       ) : null}
                     />
                     <Bar dataKey="transactions" radius={[0, 6, 6, 0]} maxBarSize={20} isAnimationActive>
-                      {topStates.slice(0, 10).map((_, index) => <Cell key={index} fill={index === 0 ? "#F5C26B" : "url(#bar-indigo-cyan)"} />)}
-                      <LabelList dataKey="transactions" position="right" formatter={(value: any) => compactTransactions(Number(value))} fill={darkMode ? "#C7CDE0" : "#475569"} fontSize={12} />
+                      {topStates.slice(0, 10).map((_, index) => <Cell key={index} fill={index === 0 ? "var(--rank-accent)" : "var(--chart-accent)"} />)}
+                      <LabelList dataKey="transactions" position="right" formatter={(value: any) => compactTransactions(Number(value))} fill="var(--secondary)" fontSize={12} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -820,19 +783,19 @@ export default function Home() {
 
           <section className="glass-card p-4 sm:p-6">
             <div className="mb-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8B94B3]">India overview</p>
-              <h2 className="mt-1 text-lg font-semibold text-[#E6EAF5]">Transaction activity</h2>
+              <p className="text-sm text-[#8B94B3]">India overview</p>
+              <h2 className="mt-1 text-lg font-medium text-[#E6EAF5]">Transaction activity</h2>
             </div>
             <div className="h-[22rem] sm:h-[24rem]">
               {loading ? <Skeleton className="h-full w-full" /> : <IndiaActivityMap data={topStates} darkMode={darkMode} />}
             </div>
             <div className="mt-4 border-t border-white/[0.07] pt-3">
-              <div className="mb-2 flex items-center justify-between"><span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8B94B3]">Top 3 leaderboard</span><span className="text-[10px] text-[#8B94B3]">transactions</span></div>
+              <div className="mb-2 flex items-center justify-between"><span className="text-xs font-medium text-[#8B94B3]">Top 3 regions</span><span className="text-xs text-[#8B94B3]">transactions</span></div>
               <div className="space-y-1.5">
-                {topThree.map((item, index) => <div key={item.state} className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-white/[0.04]"><span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-bold ${index === 0 ? (darkMode ? "bg-[#F5C26B]/15 text-[#F5C26B]" : "bg-amber-100 text-amber-800") : index === 1 ? (darkMode ? "bg-slate-300/10 text-slate-300" : "bg-slate-100 text-slate-700") : (darkMode ? "bg-orange-200/10 text-orange-200" : "bg-orange-100 text-orange-800")}`}>{index + 1}</span><span className="flex-1 text-xs text-[#D4D9E8]">{item.state}</span><span className="tabular-nums text-xs font-medium text-[#E6EAF5]">{compactTransactions(item.transactions)}</span></div>)}
+                {topThree.map((item, index) => <div key={item.state} className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-raised)]"><span className={`flex h-5 w-5 items-center justify-center rounded-md text-[10px] font-semibold ${index === 0 ? "bg-[var(--rank-accent)]/15 text-[var(--rank-accent)]" : "bg-[var(--surface-raised)] text-[var(--secondary)]"}`}>{index + 1}</span><span className="flex-1 text-xs text-[#D4D9E8]">{item.state}</span><span className="tabular-nums text-xs font-medium text-[#E6EAF5]">{compactTransactions(item.transactions)}</span></div>)}
               </div>
             </div>
-            <p className="mt-3 text-right text-[9px] text-[#8B94B3]">Map data © <a className="underline underline-offset-2 hover:text-[#A5B4FC]" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a></p>
+            <p className="mt-3 text-right text-[10px] text-[#8B94B3]">Map data © <a className="underline underline-offset-2 hover:text-[var(--accent)]" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a></p>
           </section>
         </div>
 
@@ -840,8 +803,8 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <section className="glass-card p-4 sm:p-6">
             <div className="mb-5 flex items-end justify-between">
-              <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8B94B3]">Momentum</p><h2 className="mt-1 text-lg font-semibold text-[#E6EAF5]">Quarterly transaction trend</h2></div>
-              <span className="rounded-full bg-[#6366F1]/10 px-2.5 py-1 text-[10px] text-[#A5B4FC]">{selectedYear ?? "All years"}</span>
+              <div><p className="text-sm text-[#8B94B3]">Momentum</p><h2 className="mt-1 text-lg font-medium text-[#E6EAF5]">Quarterly transaction trend</h2></div>
+              <span className="text-xs text-[#8B94B3]">{selectedYear ?? "All years"}</span>
             </div>
             <div className="h-64 sm:h-72">
               {loading ? (
@@ -849,12 +812,11 @@ export default function Home() {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trends} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
-                    <defs><linearGradient id="trend-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.38} /><stop offset="95%" stopColor="#6366F1" stopOpacity={0.015} /></linearGradient><filter id="latest-glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="4" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
-                    <CartesianGrid stroke="rgba(139,148,179,.10)" vertical={false} />
-                    <XAxis dataKey="period" tickFormatter={(v) => { const [year, quarter] = String(v).split(" - "); return selectedYear ? quarter : quarter === "Q1" ? `’${year?.slice(-2)}` : ""; }} interval={0} tick={{ fontSize: 12, fill: "#A6AEC7" }} axisLine={false} tickLine={false} padding={{ left: 8, right: 20 }} />
-                    <YAxis ticks={selectedYear ? undefined : trendTicks} tickFormatter={(v) => `${(v / 1e9).toFixed(0)}B`} tick={{ fontSize: 11, fill: "#A6AEC7" }} axisLine={false} tickLine={false} domain={selectedYear && trends.length > 1 ? ["dataMin * 0.9", "dataMax * 1.05"] : [0, trendTicks[trendTicks.length - 1] || 10_000_000_000]} width={48} />
-                    <Tooltip cursor={{ stroke: "#A5B4FC", strokeDasharray: "4 4" }} content={<DashboardDataTooltip />} />
-                    <Area type="monotone" dataKey="transactions" stroke="#8B5CF6" strokeWidth={2.5} fill="url(#trend-area)" activeDot={{ r: 5, fill: "#22D3EE", stroke: "#0A0F24", strokeWidth: 2 }} dot={({ cx, cy, index }: any) => index === trends.length - 1 ? <circle cx={cx} cy={cy} r={5} fill="#22D3EE" stroke="#E6EAF5" strokeWidth={2} filter="url(#latest-glow)" /> : null} isAnimationActive />
+                    <CartesianGrid stroke="var(--hairline)" vertical={false} />
+                    <XAxis dataKey="period" tickFormatter={(v) => { const [year, quarter] = String(v).split(" - "); return selectedYear ? quarter : quarter === "Q1" ? `’${year?.slice(-2)}` : ""; }} interval={0} tick={{ fontSize: 12, fill: "var(--muted)" }} axisLine={false} tickLine={false} padding={{ left: 8, right: 20 }} />
+                    <YAxis ticks={selectedYear ? undefined : trendTicks} tickFormatter={(v) => `${(v / 1e9).toFixed(0)}B`} tick={{ fontSize: 12, fill: "var(--muted)" }} axisLine={false} tickLine={false} domain={selectedYear && trends.length > 1 ? ["dataMin * 0.9", "dataMax * 1.05"] : [0, trendTicks[trendTicks.length - 1] || 10_000_000_000]} width={52} />
+                    <Tooltip cursor={{ stroke: "var(--hairline)", strokeDasharray: "3 3" }} content={<DashboardDataTooltip />} />
+                    <Area type="monotone" dataKey="transactions" stroke="var(--chart-accent)" strokeWidth={2.5} fill="var(--chart-accent)" fillOpacity={0.12} activeDot={{ r: 4, fill: "var(--chart-accent)", stroke: "var(--surface)", strokeWidth: 2 }} dot={({ cx, cy, index }: any) => index === trends.length - 1 ? <circle cx={cx} cy={cy} r={4} fill="var(--chart-accent)" stroke="var(--surface)" strokeWidth={2} /> : null} isAnimationActive />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -862,7 +824,7 @@ export default function Home() {
           </section>
 
           <section className="glass-card p-4 sm:p-6">
-            <div className="mb-5"><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8B94B3]">Payment mix</p><h2 className="mt-1 text-lg font-semibold text-[#E6EAF5]">Category share</h2></div>
+            <div className="mb-5"><p className="text-sm text-[#8B94B3]">Payment mix</p><h2 className="mt-1 text-lg font-medium text-[#E6EAF5]">Category share</h2></div>
             <div className="grid min-h-64 grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(190px,0.9fr)_minmax(170px,1.1fr)]">
               {loading ? (
                 <Skeleton className="h-64 w-full" />
@@ -895,7 +857,7 @@ export default function Home() {
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
                     <span className="max-w-28 truncate text-xs text-[#8B94B3]">{categories[0]?.category ?? "No data"}</span>
                     <strong className="mono-numbers mt-0.5 text-2xl text-[#E6EAF5]">{categories.length ? `${((categories[0].transactions / categories.reduce((sum, item) => sum + item.transactions, 0)) * 100).toFixed(0)}%` : "—"}</strong>
-                    <span className="text-[9px] uppercase tracking-widest text-[#8B94B3]">of transactions</span>
+                    <span className="text-xs text-[#8B94B3]">of transactions</span>
                   </div>
                 </div>
               )}
@@ -921,25 +883,17 @@ export default function Home() {
         </div>
 
         {/* AI COPILOT */}
-        <section className="copilot-frame p-px">
-        <div className={`glass-card !rounded-[21px] overflow-hidden ${darkMode ? "!bg-[#090E21]" : "!border-slate-200 !bg-white"}`}>
-          <div className={`border-b px-4 py-4 sm:px-6 ${darkMode ? "border-white/[0.06] bg-[#0A0F24]/80" : "border-slate-200 bg-white"}`}>
+        <section className="copilot-frame overflow-hidden">
+        <div className="glass-card overflow-hidden">
+          <div className="border-b px-4 py-4 sm:px-6">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 rounded-xl bg-cyan-400/15 p-2 text-cyan-200">
-                  <Bot size={20} aria-hidden="true" />
+                <div className="mt-0.5 rounded-lg bg-black/[0.05] p-2 text-[#8B94B3] dark:bg-white/[0.06]">
+                  <Bot size={18} aria-hidden="true" />
                 </div>
                 <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className={`text-base sm:text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                      AI Copilot
-                    </h2>
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${darkMode ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-200" : "border-emerald-700/20 bg-emerald-50 text-emerald-800"}`}>
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                      Data assistant
-                    </span>
-                  </div>
-                  <p className={`text-xs sm:text-sm ${darkMode ? "text-slate-300" : "text-slate-600"}`}>
+                  <h2 className="text-base font-medium text-[#E6EAF5] sm:text-lg">AI Copilot</h2>
+                  <p className="text-sm text-[#8B94B3]">
                     {selectedYear ? `Viewing ${selectedYear}. Ask for “overall” or “all years” to include the full period.` : "Viewing all available years. Ask about a specific year to narrow the answer."}
                   </p>
                 </div>
@@ -951,7 +905,7 @@ export default function Home() {
                   setInput("");
                 }}
                 disabled={(messages.length === 0 && !input) || chatLoading}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${darkMode ? "border-white/20 text-white hover:bg-white/10" : "border-slate-300 text-slate-700 hover:bg-slate-100"}`}
+                className="quiet-button inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Clear Copilot conversation"
               >
                 <Trash2 size={13} aria-hidden="true" />
@@ -960,18 +914,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className={`thin-scrollbar min-h-[15rem] max-h-[65vh] space-y-5 overflow-y-auto p-4 sm:p-6 ${darkMode ? "!bg-[#090E21]" : "!bg-slate-50"} ${messages.length === 0 ? "sm:min-h-[17rem]" : ""}`}>
+          <div className={`thin-scrollbar min-h-48 max-h-[65vh] space-y-5 overflow-y-auto bg-[var(--surface)] p-4 sm:p-6 ${messages.length === 0 ? "sm:min-h-52" : ""}`}>
             {messages.length === 0 && (
-              <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center py-2">
-                <div className="mb-3 rounded-2xl bg-blue-100 p-3 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                  <Sparkles size={22} aria-hidden="true" />
-                </div>
-                <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
-                  What would you like to explore?
-                </p>
-                <p className="mb-5 mt-1 text-center text-xs text-slate-500 dark:text-slate-400">
-                  Choose a suggestion or ask in your own words.
-                </p>
+              <div className="mx-auto flex h-full max-w-3xl flex-col items-center justify-center py-2">
+                <p className="text-sm font-medium text-[#E6EAF5]">Explore the transaction data</p>
+                <p className="mb-4 mt-1 text-center text-sm text-[#8B94B3]">Choose a question or write your own</p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {COPILOT_SUGGESTIONS.map((suggestion) => (
                     <button
@@ -979,9 +926,8 @@ export default function Home() {
                       type="button"
                       onClick={() => handleSend(suggestion)}
                       disabled={chatLoading}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[#8B5CF6]/25 bg-white/[0.035] px-3 py-2 text-left text-xs text-[#C7CDE0] transition hover:border-[#22D3EE]/50 hover:bg-[#6366F1]/10 hover:text-[#E6EAF5] disabled:opacity-50"
+                      className="suggestion-chip rounded-md border px-3 py-2 text-left text-sm text-[#C7CDE0] transition-colors disabled:opacity-50"
                     >
-                      <Sparkles size={12} className="shrink-0 text-[#A5B4FC]" />
                       {suggestion}
                     </button>
                   ))}
@@ -992,68 +938,62 @@ export default function Home() {
             {messages.map((msg, index) => (
               <div key={index} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
-                  <div className="mt-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  <div className="mt-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-black/[0.05] text-[#8B94B3] dark:bg-white/[0.06]">
                     <Bot size={16} aria-hidden="true" />
                   </div>
                 )}
                 <div className={`flex max-w-[88%] flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                  <span className="px-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                  <span className="px-1 text-xs text-[#8B94B3]">
                     {msg.role === "user" ? "You" : "AI Copilot"}
                   </span>
-                  <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  <div className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "rounded-br-md bg-gradient-to-br from-[#6366F1] to-[#7C3AED] text-white shadow-lg shadow-indigo-950/20"
-                      : darkMode ? "rounded-tl-md border border-white/[0.08] bg-white/[0.045] text-[#E6EAF5] shadow-sm backdrop-blur-xl" : "rounded-tl-md border border-slate-200 bg-white text-slate-800 shadow-sm"
+                      ? "copilot-user-bubble rounded-br-md"
+                      : "copilot-assistant-bubble rounded-tl-md border"
                   }`}>
                     {msg.role === "assistant" ? (
                       <>
-                        {index > 0 && /\b(overall|all years|combined|entire period)\b/i.test(messages[index - 1]?.content ?? "") && <span className={`mb-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${darkMode ? "bg-indigo-400/15 text-indigo-200" : "bg-indigo-50 text-indigo-700"}`}>Scope: all years</span>}
+                        {index > 0 && /\b(overall|all years|combined|entire period)\b/i.test(messages[index - 1]?.content ?? "") && <p className="mb-2 text-xs text-[#8B94B3]">Scope: all years</p>}
                         <FormattedAnswer text={msg.content} />
                         {msg.chart && (
-                          <section className={`mt-4 w-full min-w-0 rounded-xl border p-3 sm:min-w-[390px] ${darkMode ? "border-white/10 bg-slate-950/35" : "border-slate-200 bg-white/75"}`} aria-label={msg.chart.title}>
+                          <section className="mt-4 w-full min-w-0 rounded-lg border bg-[var(--surface)] p-3" aria-label={msg.chart.title}>
                             <h4 className={`mb-2 text-xs font-semibold ${darkMode ? "text-slate-200" : "text-slate-700"}`}>{msg.chart.title}</h4>
                             <div className="h-52 w-full">
                               <ResponsiveContainer width="100%" height="100%">
                                 {msg.chart.type === "pie" ? (
                                   <PieChart>
-                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), String(name)]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
+                                  <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), String(name)]} contentStyle={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, color: "var(--foreground)", fontSize: 12 }} />
                                     <Pie data={msg.chart.data} dataKey={msg.chart.valueKey ?? "transactions"} nameKey={msg.chart.labelKey ?? "year"} cx="50%" cy="50%" outerRadius="76%" innerRadius="30%" paddingAngle={3} label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                                      {msg.chart.data.map((_, pointIndex) => <Cell key={pointIndex} fill={["#8B5CF6", "#22D3EE", "#34D399", "#F5C26B", "#6366F1"][pointIndex % 5]} />)}
+                                      {msg.chart.data.map((_, pointIndex) => <Cell key={pointIndex} fill={COLORS[pointIndex % COLORS.length]} />)}
                                     </Pie>
                                   </PieChart>
                                 ) : msg.chart.type === "line" ? (
                                   <LineChart data={msg.chart.data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
-                                    <CartesianGrid vertical={false} stroke={darkMode ? "#FFFFFF12" : "#64748B24"} />
-                                    <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
-                                    <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
-                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
-                                    {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "#8B5CF6" }]).map((series) => <Line key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={series.color} strokeWidth={2.5} dot={{ r: 2.5 }} activeDot={{ r: 5 }} connectNulls />)}
+                                    <CartesianGrid vertical={false} stroke="var(--hairline)" />
+                                    <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: "var(--muted)", fontSize: 11 }} />
+                                    <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: "var(--muted)", fontSize: 10 }} />
+                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]} contentStyle={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, color: "var(--foreground)", fontSize: 12 }} />
+                                    {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "var(--chart-accent)" }]).map((series, seriesIndex) => <Line key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={COLORS[seriesIndex % COLORS.length]} strokeWidth={2} dot={false} activeDot={{ r: 4 }} connectNulls />)}
                                   </LineChart>
                                 ) : msg.chart.type === "area" ? (
                                   <AreaChart data={msg.chart.data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
-                                    <CartesianGrid vertical={false} stroke={darkMode ? "#FFFFFF12" : "#64748B24"} />
-                                    <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
-                                    <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
-                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]} contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }} />
-                                    {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "#8B5CF6" }]).map((series) => <Area key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={series.color} strokeWidth={2.5} fill={series.color} fillOpacity={0.15} connectNulls />)}
+                                    <CartesianGrid vertical={false} stroke="var(--hairline)" />
+                                    <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: "var(--muted)", fontSize: 11 }} />
+                                    <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: "var(--muted)", fontSize: 10 }} />
+                                    <Tooltip formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]} contentStyle={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, color: "var(--foreground)", fontSize: 12 }} />
+                                    {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "var(--chart-accent)" }]).map((series, seriesIndex) => <Area key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={COLORS[seriesIndex % COLORS.length]} strokeWidth={2} fill={COLORS[seriesIndex % COLORS.length]} fillOpacity={0.12} connectNulls />)}
                                   </AreaChart>
                                 ) : (
                                 <BarChart data={msg.chart.data} margin={{ top: 16, right: 12, left: 0, bottom: 0 }}>
-                                  <defs>
-                                    <linearGradient id={`copilot-bar-${index}`} x1="0" y1="0" x2="0" y2="1">
-                                      <stop offset="0%" stopColor="#8B5CF6" />
-                                      <stop offset="100%" stopColor="#22D3EE" />
-                                    </linearGradient>
-                                  </defs>
-                                  <CartesianGrid vertical={false} stroke={darkMode ? "#FFFFFF12" : "#64748B24"} />
-                                  <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 11 }} />
-                                  <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: darkMode ? "#A5AEC7" : "#64748B", fontSize: 10 }} />
+                                  <CartesianGrid vertical={false} stroke="var(--hairline)" />
+                                  <XAxis dataKey={msg.chart.labelKey ?? "year"} tickLine={false} axisLine={false} tick={{ fill: "var(--muted)", fontSize: 11 }} />
+                                  <YAxis width={64} tickLine={false} axisLine={false} tickFormatter={(value: number) => formatCopilotChartValue(msg.chart!, value)} tick={{ fill: "var(--muted)", fontSize: 10 }} />
                                   <Tooltip
                                     formatter={(value: any, name: any) => [formatCopilotChartValue(msg.chart!, Number(value)), msg.chart?.series?.find((item) => item.key === name)?.label ?? msg.chart?.valueLabel ?? String(name)]}
                                     labelFormatter={(label: any) => String(label)}
-                                    contentStyle={{ background: darkMode ? "#11182B" : "#FFFFFF", border: `1px solid ${darkMode ? "#334155" : "#CBD5E1"}`, borderRadius: 10, color: darkMode ? "#E6EAF5" : "#1E293B", fontSize: 12 }}
+                                    contentStyle={{ background: "var(--surface)", border: "1px solid var(--hairline)", borderRadius: 8, color: "var(--foreground)", fontSize: 12 }}
                                   />
-                                  {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: `url(#copilot-bar-${index})` }]).map((series) => <Bar key={series.key} dataKey={series.key} name={series.label} fill={series.color} radius={[6, 6, 0, 0]} maxBarSize={54}>{msg.chart?.series?.length === 1 && <LabelList dataKey={series.key} position="top" formatter={(value: any) => formatCopilotChartValue(msg.chart!, Number(value))} fill={darkMode ? "#D8DDF0" : "#475569"} fontSize={10} />}</Bar>)}
+                                  {(msg.chart.series?.length ? msg.chart.series : [{ key: msg.chart.valueKey ?? "transactions", label: msg.chart.valueLabel ?? "Transactions", color: "var(--chart-accent)" }]).map((series, seriesIndex) => <Bar key={series.key} dataKey={series.key} name={series.label} fill={COLORS[seriesIndex % COLORS.length]} radius={[3, 3, 0, 0]} maxBarSize={44}>{msg.chart?.series?.length === 1 && <LabelList dataKey={series.key} position="top" formatter={(value: any) => formatCopilotChartValue(msg.chart!, Number(value))} fill="var(--secondary)" fontSize={11} />}</Bar>)}
                                 </BarChart>
                                 )}
                               </ResponsiveContainer>
@@ -1072,23 +1012,18 @@ export default function Home() {
 
             {chatLoading && !responseStarted && (
               <div className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                <div className="flex h-7 w-7 items-center justify-center rounded-md bg-black/[0.05] text-[#8B94B3] dark:bg-white/[0.06]">
                   <Bot size={16} aria-hidden="true" />
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                  <span>Analyzing your question</span>
-                  <span className="flex gap-1" aria-hidden="true">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.2s]" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.1s]" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-blue-500" />
-                  </span>
+                <div className="copilot-assistant-bubble flex items-center gap-2 rounded-xl rounded-tl-md border px-4 py-3 text-sm">
+                  <span>Working through the selected data</span>
                 </div>
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          <div className={`border-t p-3 sm:p-4 ${darkMode ? "border-white/[0.07] bg-[#080D20]/90" : "border-slate-200 bg-white"}`}>
+          <div className="border-t bg-[var(--surface)] p-3 sm:p-4">
             <div className="flex gap-2 sm:gap-3">
               <input
                 type="text"
@@ -1096,12 +1031,12 @@ export default function Home() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask about any year, states, trends, or categories..."
-                className={`flex-1 rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-[#6366F1] focus:ring-4 focus:ring-[#6366F1]/10 sm:px-4 sm:py-3 ${darkMode ? "border-white/[0.1] bg-[#11182B] text-[#E6EAF5] placeholder:text-[#8791AC]" : "border-slate-300 bg-white text-slate-800 placeholder:text-slate-400"}`}
+                className="copilot-input flex-1 rounded-lg border px-3 py-2.5 text-sm outline-none transition-colors sm:px-4 sm:py-3"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={chatLoading || !input.trim()}
-                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed sm:px-5 sm:py-3 ${darkMode ? "bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white disabled:opacity-40" : "bg-indigo-700 text-white hover:bg-indigo-800 disabled:bg-indigo-200 disabled:text-indigo-900"}`}
+                className="copilot-send inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed sm:px-5 sm:py-3"
               >
                 <span className="hidden sm:inline">Send</span>
                 <Send size={16} aria-hidden="true" />
@@ -1110,8 +1045,8 @@ export default function Home() {
           </div>
         </div>
         </section>
-        <footer className={`flex flex-col gap-2 border-t py-5 text-xs sm:flex-row sm:items-center sm:justify-between ${darkMode ? "border-white/[0.06] text-[#A6AEC7]" : "border-slate-200 text-slate-600"}`}>
-          <span>Data: PhonePe Pulse <span className="mx-1 text-[#6366F1]">·</span> Used Gemini API</span>
+        <footer className="flex flex-col gap-2 border-t py-5 text-sm text-[#8B94B3] sm:flex-row sm:items-center sm:justify-between">
+          <span>Data: PhonePe Pulse <span className="mx-1">·</span> Gemini API</span>
           <span>Data through {trends.length ? trends[trends.length - 1].period.replace(" - ", " ") : "—"}</span>
         </footer>
       </main>
